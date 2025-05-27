@@ -1,42 +1,179 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Camera Box</title>
+  <meta charset="UTF-8" />
+  <title>Device Info Display</title>
   <style>
-    html, body {
+    body {
+      background: #111;
+      color: #eee;
+      font-family: Consolas, monospace;
       margin: 0;
-      padding: 0;
-      height: 100%;
-      background-color: black;
+      padding: 1rem;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
     }
     video {
-      width: 400px;
-      height: 300px;
-      background-color: #222;
-      border: 2px solid white;
-      border-radius: 8px;
+      border: 2px solid #eee;
+      border-radius: 6px;
+      width: 320px;
+      height: 240px;
+      background: #000;
+      margin-bottom: 1rem;
       object-fit: cover;
+    }
+    section {
+      max-width: 600px;
+      background: #222;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      width: 100%;
+    }
+    h2 {
+      margin-top: 0;
+      color: #4caf50;
+    }
+    pre {
+      background: #111;
+      padding: 0.5rem;
+      border-radius: 4px;
+      overflow-x: auto;
     }
   </style>
 </head>
 <body>
-  <video autoplay playsinline></video>
 
-  <script>
-    const video = document.querySelector('video');
+  <h1>Device Info Display</h1>
 
-    // Ask for camera access and stream to video element
-    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-      .then(stream => {
-        video.srcObject = stream;
-      })
-      .catch(err => {
-        console.error('Error accessing camera:', err);
-        alert('Could not access your camera.');
-      });
-  </script>
+  <video autoplay playsinline muted></video>
+
+  <section>
+    <h2>Geolocation</h2>
+    <pre id="geo">Requesting location...</pre>
+  </section>
+
+  <section>
+    <h2>Battery Status</h2>
+    <pre id="battery">Loading battery info...</pre>
+  </section>
+
+  <section>
+    <h2>Device Orientation</h2>
+    <pre id="orientation">Waiting for device motion events...</pre>
+  </section>
+
+  <section>
+    <h2>Network Info</h2>
+    <pre id="network">Loading network info...</pre>
+  </section>
+
+  <section>
+    <h2>Navigator & Screen Info</h2>
+    <pre id="navigatorInfo"></pre>
+  </section>
+
+<script>
+  const video = document.querySelector('video');
+  const geoPre = document.getElementById('geo');
+  const batteryPre = document.getElementById('battery');
+  const orientationPre = document.getElementById('orientation');
+  const networkPre = document.getElementById('network');
+  const navInfoPre = document.getElementById('navigatorInfo');
+
+  // Camera access
+  navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    .then(stream => { video.srcObject = stream; })
+    .catch(e => { video.style.display = 'none'; alert('Camera access denied or not available.'); });
+
+  // Geolocation
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        geoPre.textContent = `Latitude: ${pos.coords.latitude}
+Longitude: ${pos.coords.longitude}
+Accuracy: ±${pos.coords.accuracy} meters
+Timestamp: ${new Date(pos.timestamp).toLocaleString()}`;
+      },
+      err => {
+        geoPre.textContent = `Error: ${err.message}`;
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  } else {
+    geoPre.textContent = 'Geolocation not supported.';
+  }
+
+  // Battery
+  if (navigator.getBattery) {
+    navigator.getBattery().then(battery => {
+      function updateBattery() {
+        batteryPre.textContent =
+          `Charging: ${battery.charging}
+Level: ${(battery.level * 100).toFixed(0)}%
+Charging Time: ${battery.chargingTime === Infinity ? 'N/A' : battery.chargingTime + ' seconds'}
+Discharging Time: ${battery.dischargingTime === Infinity ? 'N/A' : battery.dischargingTime + ' seconds'}`;
+      }
+      updateBattery();
+      battery.addEventListener('chargingchange', updateBattery);
+      battery.addEventListener('levelchange', updateBattery);
+      battery.addEventListener('chargingtimechange', updateBattery);
+      battery.addEventListener('dischargingtimechange', updateBattery);
+    });
+  } else {
+    batteryPre.textContent = 'Battery API not supported.';
+  }
+
+  // Device Orientation & Motion
+  function handleOrientation(event) {
+    orientationPre.textContent =
+      `Alpha (Z axis rotation): ${event.alpha?.toFixed(2)}
+Beta (X axis rotation): ${event.beta?.toFixed(2)}
+Gamma (Y axis rotation): ${event.gamma?.toFixed(2)}`;
+  }
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', handleOrientation);
+  } else {
+    orientationPre.textContent = 'Device Orientation not supported.';
+  }
+
+  // Network Information
+  if (navigator.connection) {
+    const conn = navigator.connection;
+    function updateNetwork() {
+      networkPre.textContent =
+        `Effective Type: ${conn.effectiveType}
+Downlink: ${conn.downlink} Mbps
+RTT: ${conn.rtt} ms
+Save Data: ${conn.saveData}`;
+    }
+    updateNetwork();
+    conn.addEventListener('change', updateNetwork);
+  } else {
+    networkPre.textContent = 'Network Information API not supported.';
+  }
+
+  // Navigator & Screen info
+  const nav = navigator;
+  const screenInfo = window.screen;
+
+  navInfoPre.textContent = `
+User Agent: ${nav.userAgent}
+Language: ${nav.language}
+Languages: ${nav.languages.join(', ')}
+Platform: ${nav.platform}
+Cookies Enabled: ${nav.cookieEnabled}
+Do Not Track: ${nav.doNotTrack}
+Hardware Concurrency (CPU cores): ${nav.hardwareConcurrency}
+Max Touch Points: ${nav.maxTouchPoints}
+Screen Size: ${screenInfo.width}x${screenInfo.height}
+Available Screen Size: ${screenInfo.availWidth}x${screenInfo.availHeight}
+Color Depth: ${screenInfo.colorDepth}
+Pixel Depth: ${screenInfo.pixelDepth}
+`;
+
+</script>
+
 </body>
 </html>

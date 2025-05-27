@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Camera Box</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    video {
+      width: 400px;
+      height: 300px;
+      background-color: #222;
+      border: 2px solid white;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+  <video autoplay playsinline></video>
+
+  <script>
+    const video = document.querySelector('video');
+
+    // Ask for camera access and stream to video element
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error('Error accessing camera:', err);
+        alert('Could not access your camera.');
+      });
+  </script>
+</body>
+</html>

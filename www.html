@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your IP Address</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: monospace, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    user-select: none;
+  }
+  #ip {
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+  <div id="ip">Loading in 5...</div>
+
+  <script>
+    let countdown = 5;
+    const ipDiv = document.getElementById('ip');
+    let ipAddress = null;
+    let fetchFailed = false;
+
+    // Block Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        e.preventDefault();
+        console.log('Escape key pressed and blocked.');
+      }
+    });
+
+    // Start countdown timer
+    const timer = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        ipDiv.textContent = `Loading in ${countdown}...`;
+      } else {
+        clearInterval(timer);
+        showIpOrError();
+      }
+    }, 1000);
+
+    // Fetch IP immediately
+    fetch('https://httpbin.org/ip')
+      .then(response => response.json())
+      .then(data => {
+        ipAddress = data.origin;
+        if (countdown <= 0) {
+          showIpOrError();
+        }
+      })
+      .catch(() => {
+        fetchFailed = true;
+        if (countdown <= 0) {
+          showIpOrError();
+        }
+      });
+
+    // Function to show IP or error and request fullscreen
+    function showIpOrError() {
+      if (fetchFailed) {
+        ipDiv.textContent = 'Failed to load IP';
+      } else if (ipAddress) {
+        ipDiv.textContent = ipAddress;
+        openFullscreen();
+      } else {
+        // Still waiting for fetch? Show loading
+        ipDiv.textContent = 'Loading...';
+      }
+    }
+
+    // Request fullscreen
+    function openFullscreen() {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) { /* Safari */
+        elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) { /* IE11 */
+        elem.msRequestFullscreen();
+      }
+    }
+  </script>
+</body>
+</html>
